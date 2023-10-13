@@ -16,9 +16,9 @@ import BackgroundImage from '../../assets/backgroundImage';
 import Squares from '../../assets/squares';
 import TranslateButton from '../../assets/translateButon';
 import { useEffect, useState } from 'react';
-import { handleLogin } from '../../callApi';
+import { handleLogin } from '../../redux/api/auth.controller';
 import { useDispatch } from 'react-redux';
-import { isLogin } from '../../redux/reducers';
+import { isLogin } from '../../redux/slice';
 import { useNavigate } from 'react-router-dom';
 
 function Login() {
@@ -28,6 +28,10 @@ function Login() {
   const [message, setMessage] = useState('');
   const dispath = useDispatch();
   const navigate = useNavigate();
+  const [checkStrongPasswordText, setcheckStrongPasswordText] = useState(
+    '*mật khẩu phải chứa ít nhất 8 kí tự!',
+  );
+  const [validEmailText, setValidEmailText] = useState('*email không hợp lệ!');
 
   const handleClickLoginBtn = async () => {
     const responMessage = await handleLogin(username, password);
@@ -40,11 +44,38 @@ function Login() {
     dispath(isLogin.actions.IS_LOGIN_REDUCER(responMessage));
   };
 
+  const isStrongPassword = (password) => {
+    if (password.length < 8) {
+      return false;
+    }
+
+    return true;
+  };
+  function isValidEmail(email) {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailPattern.test(email);
+  }
   useEffect(() => {
     if (isLoginState) {
       navigate('/home');
     }
   }, [isLoginState]);
+
+  useEffect(() => {
+    const checkStrongPassword = () => {
+      isStrongPassword(password)
+        ? setcheckStrongPasswordText('')
+        : setcheckStrongPasswordText('*mật khẩu phải chứa ít nhất 8 kí tự!');
+    };
+    const checkIsValidEmail = () => {
+      isValidEmail(username)
+        ? setValidEmailText('')
+        : setValidEmailText('*email không hợp lệ!');
+    };
+    checkStrongPassword();
+    checkIsValidEmail();
+  }, [password, username]);
+
   return (
     <div className="login">
       <div className="container">
@@ -103,6 +134,7 @@ function Login() {
                     }}
                   />
                 </Box>
+                <p className="message">{validEmailText}</p>
               </div>
             </div>
             <div className="inputItem">
@@ -163,6 +195,7 @@ function Login() {
                     }}
                   />
                 </Box>
+                <p className="message">{checkStrongPasswordText}</p>
               </div>
               <p className="message">{message}</p>
             </div>
